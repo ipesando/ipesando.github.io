@@ -1,0 +1,222 @@
+<!--
+Copyright 2021 Matthias Müller - Ten Minute Physics
+
+2023 Igor Pesando
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  -->
+
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Pitfalls in numeric: Cannonball</title>
+
+    <style>
+
+      .same_line {
+	  display: inline;
+      }
+      
+      .slider {
+          -webkit-appearance: none;
+          width: 80px;
+          height: 6px;
+          border-radius: 5px;
+          background: #d3d3d3;
+          outline: none;
+          opacity: 0.7;
+          -webkit-transition: .2s;
+          transition: opacity .2s;
+      }
+    </style>
+
+
+  </head>
+
+  <body>
+
+    <div class="Commands">
+
+
+      <div class="same_line">
+	rescale factor timeStep*100
+	<input type = "range" min = "1" max = "1000" value = "100" id = "dtSlider" class = "slider">    
+      </div>
+
+      timeStep= <div class="same_line" id="dt"> 0.0000 </div>
+
+
+      <div class="same_line">
+	x "gravity"
+	<input type = "range" min = "0" max = "10" value = "1" id =
+	       "gxSlider" class = "slider">
+      </div>
+
+      "x gravity"= <div class="same_line" id="gx"> 0.0000 </div>
+    </div>
+
+
+    
+    <div class="Data">
+      E=      <div class="same_line" id="E"> 0.0000 </div>
+      v=      <div class="same_line" id="v"> 0.0000 </div>
+
+      vx=      <div class="same_line" id="vx"> 0.0000 </div>
+      vy=      <div class="same_line" id="vy"> 0.0000 </div>
+    </div>
+
+    
+    <canvas id="myCanvas" style="border:2px solid"></canvas>
+
+  <script>
+
+    // canvas setup -------------------------------------------------------
+
+    var canvas = document.getElementById("myCanvas");
+    var c = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth - 20;
+    canvas.height = window.innerHeight - 100;
+
+    // set simWidth and simHeight so that the minimun of the two is simMinWidth 
+    var simMinWidth = 1.0;
+    var cScale = Math.min(canvas.width, canvas.height) / simMinWidth;
+    var simWidth = canvas.width / cScale;
+    var simHeight = canvas.height / cScale;
+
+
+    // now set  x_ini, y_ini and vx_ini and vy_ini as measured wrt simMinWidth
+    
+    // scene -------------------------------------------------------
+
+   
+    var gravity = { x: 0.0 *simMinWidth, y: -10.0 *simMinWidth};
+
+    var timeStep_ini = 1.0 / 6000.0;
+    // value we modify
+    var timeStep = timeStep_ini;
+    
+    var x_ini = 0.5 *simWidth;
+    var y_ini = 0.5 *simHeight;
+    var radius_ini = 0.02 *simMinWidth;
+    var vx_ini = 0.5 *simWidth;
+    var vy_ini = 0.8 *simHeight;
+    
+    var ball = {
+	radius : radius_ini,
+	pos : {x : x_ini, y : y_ini},
+	vel : {x : vx_ini, y : vy_ini}
+    };
+
+    // drawing -------------------------------------------------------
+
+    function cX(pos) {
+	return pos.x * cScale;
+    }
+
+    function cY(pos) {
+	return canvas.height - pos.y * cScale;
+    }
+
+
+    function draw() {
+	c.clearRect(0, 0, canvas.width, canvas.height);
+
+	c.fillStyle = "#FF0000";
+
+	c.beginPath();			
+	c.arc(
+	    cX(ball.pos), cY(ball.pos), cScale * ball.radius, 0.0, 2.0 * Math.PI); 
+	//			ball.pos, ball.pos, ball.radius, 0.0, 2.0 * Math.PI); 
+	c.closePath();
+	c.fill();			
+    }
+
+    // simulation ----------------------------------------------------
+
+    function simulate() {
+
+	// if we update the velocity first we change energy by
+	// (gravity * timeStep)^2 ! 
+	ball.vel.x += gravity.x * timeStep;
+	ball.vel.y += gravity.y * timeStep;
+	ball.pos.x += ball.vel.x * timeStep;
+	ball.pos.y += ball.vel.y * timeStep;
+
+	if (ball.pos.x < 0.0) {
+	    ball.pos.x = 0.0;
+	    ball.vel.x = -ball.vel.x;
+	}
+	if (ball.pos.x > simWidth) {
+	    ball.pos.x = simWidth;
+	    ball.vel.x = -ball.vel.x;
+	}
+	// with this rule we give some energy to the system!
+	if (ball.pos.y < 0.0) {
+	    ball.pos.y = 0.0;
+	    ball.vel.y = -ball.vel.y;
+	}
+    }
+
+
+    // write data
+    function precise(x) {
+      return x.toPrecision(5) ;
+    }
+
+    function write_data() {
+	v = Math.sqrt( (ball.vel.x)**2 + (ball.vel.y)**2 );
+	E = 1/2.0 *v *v - gravity.y *ball.pos.y - gravity.x *ball.pos.x;
+
+	document.getElementById("E").innerHTML=precise(E);
+	document.getElementById("v").innerHTML=precise(v);
+
+	document.getElementById("vx").innerHTML=precise(ball.vel.x);
+	document.getElementById("vy").innerHTML=precise(ball.vel.y);
+
+	document.getElementById("dt").innerHTML=precise(timeStep);
+	document.getElementById("gx").innerHTML=precise(gravity.x);
+
+
+    }
+    
+    // make browser to call us repeatedly -----------------------------------
+
+    function update() {
+	simulate();
+	draw();
+	write_data();
+
+	document.getElementById("dtSlider").oninput = function() {
+	    timeStep = Number(this.value) * timeStep_ini/100;
+	}
+
+	document.getElementById("gxSlider").oninput = function() {
+	    gravity.x = Number(this.value);
+	}
+
+	requestAnimationFrame(update);
+    }
+    
+    update();
+    
+  </script> 
+  </body>
+</html>
