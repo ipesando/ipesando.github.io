@@ -1,7 +1,7 @@
 <!--
 Copyright 2021 Matthias Müller - Ten Minute Physics
 
-2023 Igor Pesando
+Copyleft 2023 Igor Pesando
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -56,8 +56,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  -->
 
 
       <div class="same_line">
-	rescale factor timeStep*100
-	<input type = "range" min = "1" max = "1000" value = "100" id = "dtSlider" class = "slider">    
+	rescale factor timeStep*20
+	<input type = "range" min = "1" max = "1000" value = "200" id = "dtSlider" class = "slider">    
       </div>
 
       timeStep= <div class="same_line" id="dt"> 0.0000 </div>
@@ -205,7 +205,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  -->
 	write_data();
 
 	document.getElementById("dtSlider").oninput = function() {
-	    timeStep = Number(this.value) * timeStep_ini/100;
+	    timeStep = Number(this.value) * timeStep_ini/20;
 	}
 
 	document.getElementById("gxSlider").oninput = function() {
